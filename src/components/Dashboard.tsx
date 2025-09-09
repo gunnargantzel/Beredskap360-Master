@@ -9,7 +9,6 @@ import {
   Button,
   AppBar,
   Toolbar,
-  IconButton,
   Chip,
   List,
   ListItem,
@@ -31,6 +30,9 @@ import {
 } from '@mui/icons-material';
 import { useMsal } from '@azure/msal-react';
 import { dataverseService } from '../services/dataverseService';
+import { simulatedDataService } from '../services/simulatedDataService';
+import NotificationSystem from './NotificationSystem';
+import AgentStatus from './AgentStatus';
 
 const Dashboard: React.FC = () => {
   const { instance, accounts } = useMsal();
@@ -38,11 +40,14 @@ const Dashboard: React.FC = () => {
     activeExercises: 0,
     totalParticipants: 0,
     pendingEvents: 0,
-    completedEvents: 0
+    completedEvents: 0,
+    runningAgents: 0,
+    unreadNotifications: 0
   });
   const [recentEvents, setRecentEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [useSimulatedData, setUseSimulatedData] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
@@ -50,26 +55,38 @@ const Dashboard: React.FC = () => {
         setLoading(true);
         setError(null);
         
-        // Set access token for Dataverse service
-        const tokenRequest = {
-          scopes: ['https://beredskap360utv.api.crm4.dynamics.com/user_impersonation'],
-          account: accounts[0]
-        };
-        
-        const response = await instance.acquireTokenSilent(tokenRequest);
-        dataverseService.setAccessToken(response.accessToken);
-        
-        // Load statistics
-        const exerciseStats = await dataverseService.getExerciseStats();
-        setStats(exerciseStats);
-        
-        // Load recent events
-        const events = await dataverseService.getEvents();
-        setRecentEvents(events.slice(0, 5)); // Show only 5 most recent
+        if (useSimulatedData) {
+          // Bruk simulert data
+          const simulatedStats = simulatedDataService.getStats();
+          setStats(simulatedStats);
+          
+          const events = simulatedDataService.getEvents();
+          setRecentEvents(events.slice(0, 5));
+        } else {
+          // Bruk Dataverse data
+          const tokenRequest = {
+            scopes: ['https://beredskap360utv.api.crm4.dynamics.com/user_impersonation'],
+            account: accounts[0]
+          };
+          
+          const response = await instance.acquireTokenSilent(tokenRequest);
+          dataverseService.setAccessToken(response.accessToken);
+          
+          const exerciseStats = await dataverseService.getExerciseStats();
+          setStats({
+            ...exerciseStats,
+            runningAgents: 0,
+            unreadNotifications: 0
+          });
+          
+          const events = await dataverseService.getEvents();
+          setRecentEvents(events.slice(0, 5));
+        }
         
       } catch (err: any) {
         console.error('Error loading dashboard data:', err);
-        setError('Kunne ikke laste dashboard data. Sjekk tilkobling til Dataverse.');
+        setError('Kunne ikke laste dashboard data. Bruker simulert data i stedet.');
+        setUseSimulatedData(true);
       } finally {
         setLoading(false);
       }
@@ -78,7 +95,22 @@ const Dashboard: React.FC = () => {
     if (accounts.length > 0) {
       loadData();
     }
-  }, [accounts, instance]);
+  }, [accounts, instance, useSimulatedData]);
+
+  // Oppdater simulert data hver 5. sekund
+  useEffect(() => {
+    if (useSimulatedData) {
+      const interval = setInterval(() => {
+        const simulatedStats = simulatedDataService.getStats();
+        setStats(simulatedStats);
+        
+        const events = simulatedDataService.getEvents();
+        setRecentEvents(events.slice(0, 5));
+      }, 5000);
+
+      return () => clearInterval(interval);
+    }
+  }, [useSimulatedData]);
 
   const handleLogout = () => {
     instance.logoutPopup().catch((e) => {
@@ -100,9 +132,7 @@ const Dashboard: React.FC = () => {
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             Beredskap360 Master Dashboard
           </Typography>
-          <IconButton color="inherit">
-            <NotificationsIcon />
-          </IconButton>
+          <NotificationSystem />
           <Button color="inherit" onClick={handleLogout} startIcon={<LogoutIcon />}>
             Logg ut
           </Button>
@@ -243,24 +273,38 @@ const Dashboard: React.FC = () => {
           </Paper>
         </Grid>
 
-        {/* Quick Actions */}
+        {/* Agent Status */}
         <Grid size={{ xs: 12, md: 4 }}>
+          <AgentStatus />
+        </Grid>
+      </Grid>
+
+      {/* Quick Actions */}
+      <Grid container spacing={3} sx={{ mt: 2 }}>
+        <Grid size={{ xs: 12 }}>
           <Paper sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom>
               Hurtighandlinger
             </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <Button variant="outlined" fullWidth startIcon={<AddIcon />}>
+            <Box sx={{ display: 'flex', flexDirection: 'row', gap: 2, flexWrap: 'wrap' }}>
+              <Button variant="outlined" startIcon={<AddIcon />}>
                 Start ny øvelse
               </Button>
-              <Button variant="outlined" fullWidth startIcon={<EventIcon />}>
+              <Button variant="outlined" startIcon={<EventIcon />}>
                 Planlegg hendelse
               </Button>
-              <Button variant="outlined" fullWidth startIcon={<PeopleIcon />}>
+              <Button variant="outlined" startIcon={<PeopleIcon />}>
                 Administrer deltakere
               </Button>
-              <Button variant="outlined" fullWidth startIcon={<NotificationsIcon />}>
+              <Button variant="outlined" startIcon={<NotificationsIcon />}>
                 Send varsel
+              </Button>
+              <Button 
+                variant={useSimulatedData ? "contained" : "outlined"} 
+                onClick={() => setUseSimulatedData(!useSimulatedData)}
+                size="small"
+              >
+                {useSimulatedData ? 'Simulert data' : 'Dataverse data'}
               </Button>
             </Box>
           </Paper>
