@@ -7,8 +7,6 @@ import {
   Card,
   CardContent,
   Button,
-  AppBar,
-  Toolbar,
   Chip,
   List,
   ListItem,
@@ -19,13 +17,11 @@ import {
   Alert
 } from '@mui/material';
 import {
-  Dashboard as DashboardIcon,
   Event as EventIcon,
   People as PeopleIcon,
   Warning as WarningIcon,
   CheckCircle as CheckCircleIcon,
   Add as AddIcon,
-  Logout as LogoutIcon,
   Notifications as NotificationsIcon
 } from '@mui/icons-material';
 import { useMsal } from '@azure/msal-react';
@@ -112,11 +108,6 @@ const Dashboard: React.FC = () => {
     }
   }, [useSimulatedData]);
 
-  const handleLogout = () => {
-    instance.logoutPopup().catch((e) => {
-      console.error(e);
-    });
-  };
 
   const handleCreateEvent = async () => {
     // TODO: Implement create event dialog
@@ -125,19 +116,10 @@ const Dashboard: React.FC = () => {
 
   return (
     <Box sx={{ flexGrow: 1 }}>
-      {/* Header */}
-      <AppBar position="static" sx={{ mb: 3 }}>
-        <Toolbar>
-          <DashboardIcon sx={{ mr: 2 }} />
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Beredskap360 Master Dashboard
-          </Typography>
-          <NotificationSystem />
-          <Button color="inherit" onClick={handleLogout} startIcon={<LogoutIcon />}>
-            Logg ut
-          </Button>
-        </Toolbar>
-      </AppBar>
+      {/* Notification System */}
+      <Box sx={{ position: 'fixed', top: 16, right: 16, zIndex: 1000 }}>
+        <NotificationSystem />
+      </Box>
 
       {/* Welcome Message */}
       <Box sx={{ mb: 3 }}>
