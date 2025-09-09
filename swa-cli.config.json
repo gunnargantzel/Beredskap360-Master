@@ -4,7 +4,7 @@
     "beredskap360-master": {
       "appLocation": ".",
       "apiLocation": "",
-      "outputLocation": "dist",
+      "outputLocation": "build",
       "appBuildCommand": "npm run build",
       "appDevserverCommand": "npm run dev",
       "appDevserverUrl": "http://localhost:3000",
