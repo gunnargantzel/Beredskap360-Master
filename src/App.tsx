@@ -1,4 +1,3 @@
-import React from 'react';
 import { AuthenticatedTemplate, UnauthenticatedTemplate, useMsal } from '@azure/msal-react';
 import { loginRequest } from './config/authConfig';
 import Dashboard from './components/Dashboard';

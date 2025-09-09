@@ -1,0 +1,15 @@
+{
+  "$schema": "https://aka.ms/azure/static-web-apps-cli/schema",
+  "configurations": {
+    "beredskap360-master": {
+      "appLocation": ".",
+      "apiLocation": "",
+      "outputLocation": "dist",
+      "appBuildCommand": "npm run build",
+      "appDevserverCommand": "npm run dev",
+      "appDevserverUrl": "http://localhost:3000",
+      "appName": "beredskap360-master",
+      "resourceGroupName": "beredskap360-master-rg"
+    }
+  }
+}

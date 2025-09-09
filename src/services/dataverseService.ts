@@ -1,33 +1,49 @@
-import { WebApi } from 'dataverse-webapi';
 import { dataverseConfig } from '../config/authConfig';
 
 class DataverseService {
-  private webApi: WebApi;
   private accessToken: string | null = null;
+  private baseUrl: string;
 
   constructor() {
-    this.webApi = new WebApi(dataverseConfig.environmentUrl, this.getAccessToken);
+    this.baseUrl = `${dataverseConfig.environmentUrl}/api/data/v${dataverseConfig.apiVersion}`;
   }
-
-  private getAccessToken = async (): Promise<string> => {
-    if (!this.accessToken) {
-      throw new Error('No access token available. Please authenticate first.');
-    }
-    return this.accessToken;
-  };
 
   public setAccessToken(token: string) {
     this.accessToken = token;
   }
 
+  private async makeRequest(endpoint: string, options: RequestInit = {}): Promise<any> {
+    if (!this.accessToken) {
+      throw new Error('No access token available. Please authenticate first.');
+    }
+
+    const url = `${this.baseUrl}${endpoint}`;
+    const headers = {
+      'Authorization': `Bearer ${this.accessToken}`,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'OData-MaxVersion': '4.0',
+      'OData-Version': '4.0',
+      ...options.headers
+    };
+
+    const response = await fetch(url, {
+      ...options,
+      headers
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response.json();
+  }
+
   // Øvelser (Exercises)
   public async getExercises() {
     try {
-      const response = await this.webApi.retrieveMultipleRecords('new_exercises', {
-        select: ['new_exerciseid', 'new_name', 'new_status', 'new_startdate', 'new_enddate', 'new_description'],
-        orderby: 'new_startdate desc'
-      });
-      return response.value;
+      const response = await this.makeRequest('/new_exercises?$select=new_exerciseid,new_name,new_status,new_startdate,new_enddate,new_description&$orderby=new_startdate desc');
+      return response.value || [];
     } catch (error) {
       console.error('Error fetching exercises:', error);
       throw error;
@@ -36,7 +52,10 @@ class DataverseService {
 
   public async createExercise(exerciseData: any) {
     try {
-      const response = await this.webApi.createRecord('new_exercises', exerciseData);
+      const response = await this.makeRequest('/new_exercises', {
+        method: 'POST',
+        body: JSON.stringify(exerciseData)
+      });
       return response;
     } catch (error) {
       console.error('Error creating exercise:', error);
@@ -46,7 +65,10 @@ class DataverseService {
 
   public async updateExercise(exerciseId: string, exerciseData: any) {
     try {
-      const response = await this.webApi.updateRecord('new_exercises', exerciseId, exerciseData);
+      const response = await this.makeRequest(`/new_exercises(${exerciseId})`, {
+        method: 'PATCH',
+        body: JSON.stringify(exerciseData)
+      });
       return response;
     } catch (error) {
       console.error('Error updating exercise:', error);
@@ -56,7 +78,9 @@ class DataverseService {
 
   public async deleteExercise(exerciseId: string) {
     try {
-      const response = await this.webApi.deleteRecord('new_exercises', exerciseId);
+      const response = await this.makeRequest(`/new_exercises(${exerciseId})`, {
+        method: 'DELETE'
+      });
       return response;
     } catch (error) {
       console.error('Error deleting exercise:', error);
@@ -67,11 +91,8 @@ class DataverseService {
   // Hendelser (Events)
   public async getEvents() {
     try {
-      const response = await this.webApi.retrieveMultipleRecords('new_events', {
-        select: ['new_eventid', 'new_name', 'new_status', 'new_eventdate', 'new_description', 'new_exercise'],
-        orderby: 'new_eventdate desc'
-      });
-      return response.value;
+      const response = await this.makeRequest('/new_events?$select=new_eventid,new_name,new_status,new_eventdate,new_description,new_exercise&$orderby=new_eventdate desc');
+      return response.value || [];
     } catch (error) {
       console.error('Error fetching events:', error);
       throw error;
@@ -80,7 +101,10 @@ class DataverseService {
 
   public async createEvent(eventData: any) {
     try {
-      const response = await this.webApi.createRecord('new_events', eventData);
+      const response = await this.makeRequest('/new_events', {
+        method: 'POST',
+        body: JSON.stringify(eventData)
+      });
       return response;
     } catch (error) {
       console.error('Error creating event:', error);
@@ -90,7 +114,10 @@ class DataverseService {
 
   public async updateEvent(eventId: string, eventData: any) {
     try {
-      const response = await this.webApi.updateRecord('new_events', eventId, eventData);
+      const response = await this.makeRequest(`/new_events(${eventId})`, {
+        method: 'PATCH',
+        body: JSON.stringify(eventData)
+      });
       return response;
     } catch (error) {
       console.error('Error updating event:', error);
@@ -100,7 +127,9 @@ class DataverseService {
 
   public async deleteEvent(eventId: string) {
     try {
-      const response = await this.webApi.deleteRecord('new_events', eventId);
+      const response = await this.makeRequest(`/new_events(${eventId})`, {
+        method: 'DELETE'
+      });
       return response;
     } catch (error) {
       console.error('Error deleting event:', error);
@@ -111,11 +140,8 @@ class DataverseService {
   // Deltakere (Participants)
   public async getParticipants() {
     try {
-      const response = await this.webApi.retrieveMultipleRecords('new_participants', {
-        select: ['new_participantid', 'new_name', 'new_email', 'new_phone', 'new_department', 'new_role'],
-        orderby: 'new_name'
-      });
-      return response.value;
+      const response = await this.makeRequest('/new_participants?$select=new_participantid,new_name,new_email,new_phone,new_department,new_role&$orderby=new_name');
+      return response.value || [];
     } catch (error) {
       console.error('Error fetching participants:', error);
       throw error;
@@ -124,7 +150,10 @@ class DataverseService {
 
   public async createParticipant(participantData: any) {
     try {
-      const response = await this.webApi.createRecord('new_participants', participantData);
+      const response = await this.makeRequest('/new_participants', {
+        method: 'POST',
+        body: JSON.stringify(participantData)
+      });
       return response;
     } catch (error) {
       console.error('Error creating participant:', error);
@@ -134,7 +163,10 @@ class DataverseService {
 
   public async updateParticipant(participantId: string, participantData: any) {
     try {
-      const response = await this.webApi.updateRecord('new_participants', participantId, participantData);
+      const response = await this.makeRequest(`/new_participants(${participantId})`, {
+        method: 'PATCH',
+        body: JSON.stringify(participantData)
+      });
       return response;
     } catch (error) {
       console.error('Error updating participant:', error);
@@ -144,7 +176,9 @@ class DataverseService {
 
   public async deleteParticipant(participantId: string) {
     try {
-      const response = await this.webApi.deleteRecord('new_participants', participantId);
+      const response = await this.makeRequest(`/new_participants(${participantId})`, {
+        method: 'DELETE'
+      });
       return response;
     } catch (error) {
       console.error('Error deleting participant:', error);
