@@ -31,6 +31,7 @@
     "@mui/x-data-grid": "^8.11.1",
     "@types/react": "^19.1.12",
     "@types/react-dom": "^19.1.9",
+    "dataverse-webapi": "^3.1.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
   },
