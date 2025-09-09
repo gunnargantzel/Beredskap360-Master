@@ -1,8 +1,12 @@
 {
   "name": "beredskap360-master",
   "version": "1.0.0",
-  "description": "",
+  "description": "Beredskap360 Master - Øvelsescockpit for ansvarlige",
   "main": "index.js",
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",

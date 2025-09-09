@@ -16,8 +16,7 @@ export default defineConfig({
         manualChunks: {
           vendor: ['react', 'react-dom'],
           mui: ['@mui/material', '@mui/icons-material'],
-          msal: ['@azure/msal-browser', '@azure/msal-react'],
-          dataverse: ['dataverse-webapi']
+          msal: ['@azure/msal-browser', '@azure/msal-react']
         }
       }
     },
